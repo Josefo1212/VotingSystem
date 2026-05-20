@@ -1,0 +1,6 @@
+service VotingSystem
+port 5000
+
+methods
+	votar(candidato: string): void
+	obtenerResultados(): object
