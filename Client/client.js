@@ -1,58 +1,91 @@
 import readline from "node:readline";
-import VotingSystemStub from "./VotingSystem-stub.js";
+import ProxyVotacion from "./proxy.js";
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
 
-// El stub oculta el detalle remoto y ofrece una API local y asincrona.
-const stub = new VotingSystemStub();
+// El proxy provee transparencia de ubicacion: el cliente invoca metodos locales.
+const proxy = new ProxyVotacion();
 
 const ask = (question) => new Promise((resolve) => rl.question(question, resolve));
 
-const printMenu = () => {
+const printMenu = (candidatos) => {
   console.log("\n=== Sistema de Votacion ===");
-  console.log("1. Votar A");
-  console.log("2. Votar B");
-  console.log("3. Ver Resultados");
-  console.log("4. Salir");
+  candidatos.forEach((candidato, index) => {
+    console.log(`${index + 1}. Votar por ${candidato}`);
+  });
+  console.log(`${candidatos.length + 1}. Agregar candidato`);
+  console.log(`${candidatos.length + 2}. Ver resultados en el Servidor`);
+  console.log(`${candidatos.length + 3}. Salir`);
 };
 
 const main = async () => {
   let running = true;
 
   while (running) {
-    printMenu();
-    const option = await ask("Seleccione una opcion: ");
+    let candidatos = [];
 
     try {
-      switch (option.trim()) {
-        case "1":
-          await stub.votar("A");
-          console.log("Voto registrado para A.");
-          break;
-        case "2":
-          await stub.votar("B");
-          console.log("Voto registrado para B.");
-          break;
-        case "3": {
-          const resultados = await stub.obtenerResultados();
-          console.log("Resultados:");
-          console.log(`A: ${resultados.A}`);
-          console.log(`B: ${resultados.B}`);
-          console.log(`Total: ${resultados.total}`);
-          break;
-        }
-        case "4":
-          running = false;
-          break;
-        default:
-          console.log("Opcion invalida. Intente de nuevo.");
-      }
+      candidatos = await proxy.obtenerCandidatos();
     } catch (error) {
-      console.error("Error al invocar el servicio:", error.message);
+      console.error("Fallo de comunicacion:", error.message);
+      break;
     }
+
+    printMenu(candidatos);
+    const option = await ask("Seleccione una opcion: ");
+    const opcion = Number.parseInt(option.trim(), 10);
+
+    if (Number.isNaN(opcion)) {
+      console.log("Opcion invalida. Intente de nuevo.");
+      continue;
+    }
+
+    if (opcion >= 1 && opcion <= candidatos.length) {
+      const candidato = candidatos[opcion - 1];
+
+      try {
+        const respuesta = await proxy.votar(candidato);
+        console.log(respuesta ?? `Voto registrado para ${candidato}.`);
+      } catch (error) {
+        console.error("Fallo de comunicacion:", error.message);
+      }
+      continue;
+    }
+
+    if (opcion === candidatos.length + 1) {
+      const nuevoCandidato = await ask("Nombre del nuevo candidato: ");
+
+      try {
+        const respuesta = await proxy.agregarCandidato(nuevoCandidato.trim());
+        console.log(respuesta ?? `Candidato ${nuevoCandidato.trim()} agregado.`);
+      } catch (error) {
+        console.error("Fallo de comunicacion:", error.message);
+      }
+      continue;
+    }
+
+    if (opcion === candidatos.length + 2) {
+      try {
+        const resultados = await proxy.obtenerResultados();
+        console.log("Resultados:");
+        Object.entries(resultados).forEach(([candidato, votos]) => {
+          console.log(`${candidato}: ${votos}`);
+        });
+      } catch (error) {
+        console.error("Fallo de comunicacion:", error.message);
+      }
+      continue;
+    }
+
+    if (opcion === candidatos.length + 3) {
+      running = false;
+      continue;
+    }
+
+    console.log("Opcion invalida. Intente de nuevo.");
   }
 
   rl.close();
