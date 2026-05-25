@@ -4,7 +4,7 @@ export default class Stub {
     // Si pruebas en tu misma PC, usa "localhost".
     // Si pruebas entre dos PCs, pon la IPv4 del servidor (ej. "192.168.1.15").
     const IP_SERVIDOR = "localhost"; 
-    const PUERTO = 8080;
+    const PUERTO = 3000;
     
     this.serverUrl = `http://${IP_SERVIDOR}:${PUERTO}`;
   }
