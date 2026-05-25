@@ -12,11 +12,11 @@ export default class Votacion {
   }
 
   agregarCandidato(candidato) {
-    if (typeof candidato !== "string" || candidato.trim() === "") {
-      return "Error: nombre de candidato invalido.";
-    }
+    const nombreNormalizado = typeof candidato === "string" ? candidato.trim() : "";
 
-    const nombreNormalizado = candidato.trim();
+    if (nombreNormalizado === "") {
+      return "Error: el candidato no puede estar vacio.";
+    }
 
     if (Object.prototype.hasOwnProperty.call(this.votos, nombreNormalizado)) {
       return "Error: el candidato ya existe.";

@@ -1,12 +1,15 @@
 import http from "node:http";
+import { getMethodNames, loadIdl } from "../idlParser.js";
 
 export default class Skeleton {
-  constructor(dispatcher) {
+  constructor(dispatcher, idlPath) {
     this.dispatcher = dispatcher;
+    this.idl = loadIdl(idlPath);
+    this.methodNames = new Set(getMethodNames(this.idl));
   }
 
   // Al usar "0.0.0.0" por defecto, permitimos que reciba peticiones de otras IPs en la red LAN.
-  listen(port, host = "0.0.0.0") {
+  listen(port = this.idl.port, host = "0.0.0.0") {
     const server = http.createServer((req, res) => {
       // Configuramos el header para responder en JSON
       res.setHeader("Content-Type", "application/json");
@@ -29,6 +32,11 @@ export default class Skeleton {
         try {
           // Unmarshalling: Reconstruir el objeto JavaScript a partir del string JSON
           const control = JSON.parse(body);
+
+          if (!this.methodNames.has(control?.metodo)) {
+            res.writeHead(400);
+            return res.end(JSON.stringify({ exito: false, error: `Metodo no definido en el IDL: ${control?.metodo}` }));
+          }
 
           // 3. Pasar el objeto limpio al Dispatcher (Capa de reflexion de Laura)
           const resultado = this.dispatcher.dispatch(control);

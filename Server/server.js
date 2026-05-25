@@ -9,4 +9,4 @@ const dispatcher = new Dispatcher(votacion);
 const skeleton = new Skeleton(dispatcher);
 
 // El servidor queda encendido y expone el servicio remoto en el puerto 3000.
-skeleton.listen(3000);
+skeleton.listen();

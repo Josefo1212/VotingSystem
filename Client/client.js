@@ -57,10 +57,16 @@ const main = async () => {
 
     if (opcion === candidatos.length + 1) {
       const nuevoCandidato = await ask("Nombre del nuevo candidato: ");
+      const nombreNormalizado = nuevoCandidato.trim();
+
+      if (nombreNormalizado === "") {
+        console.log("El candidato no puede estar vacio.");
+        continue;
+      }
 
       try {
-        const respuesta = await proxy.agregarCandidato(nuevoCandidato.trim());
-        console.log(respuesta ?? `Candidato ${nuevoCandidato.trim()} agregado.`);
+        const respuesta = await proxy.agregarCandidato(nombreNormalizado);
+        console.log(respuesta ?? `Candidato ${nombreNormalizado} agregado.`);
       } catch (error) {
         console.error("Fallo de comunicacion:", error.message);
       }

@@ -1,20 +1,30 @@
 import Stub from "./stub.js";
+import { getMethodNames, loadIdl } from "../idlParser.js";
 
 export default class ProxyVotacion {
-  constructor(stub = new Stub()) {
-    this.stub = stub;
+  constructor(stub = null, idlPath) {
+    this.idl = loadIdl(idlPath);
+    this.methodNames = new Set(getMethodNames(this.idl));
+    this.stub = stub ?? new Stub({ serverUrl: `http://localhost:${this.idl.port}` });
 
     // Retornamos un Proxy nativo de JavaScript para interceptar llamadas dinámicamente
     return new Proxy(this, {
       get(target, prop) {
+        if (typeof prop === "symbol") {
+          return target[prop];
+        }
+
         // Si se intenta acceder a una propiedad real de la clase (como 'stub' o 'invocar'), la devolvemos normalmente
         if (prop in target) {
           return target[prop];
         }
 
-        // Si se intenta llamar a cualquier otro método (ej. proxy.votar, proxy.loQueSea),
-        // lo interceptamos y lo convertimos automáticamente en una invocación remota string-based.
+        // Si se intenta llamar a un metodo remoto, validamos primero contra el IDL.
         return (...args) => {
+          if (!target.methodNames.has(prop)) {
+            throw new Error(`Metodo no definido en el IDL: ${prop}`);
+          }
+
           return target.invocar(prop, args);
         };
       }

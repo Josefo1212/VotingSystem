@@ -1,12 +1,6 @@
 export default class Stub {
-  constructor() {
-    // ---> LUIS: CAMBIA ESTA IP EL DIA DE LA PRESENTACION <---
-    // Si pruebas en tu misma PC, usa "localhost".
-    // Si pruebas entre dos PCs, pon la IPv4 del servidor (ej. "192.168.1.15").
-    const IP_SERVIDOR = "localhost"; 
-    const PUERTO = 3000;
-    
-    this.serverUrl = `http://${IP_SERVIDOR}:${PUERTO}`;
+  constructor({ serverUrl = "http://localhost:3000" } = {}) {
+    this.serverUrl = serverUrl;
   }
 
   async invocar(payload) {
